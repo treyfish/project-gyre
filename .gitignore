@@ -8,3 +8,5 @@ coverage/
 .worktrees/
 *.log
 *.tsbuildinfo
+.vercel
+.env*
