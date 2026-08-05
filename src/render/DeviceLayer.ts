@@ -20,6 +20,7 @@ export class DeviceLayer {
   private deviceEntities: Entity[] = [];
   private previewEntities: Entity[] = [];
   private readonly collector: Entity[] = [];
+  private deviceSignature = "";
 
   constructor(private readonly entities: EntityCollection) {
     const collectorColor = Color.fromCssColorString("#c9ffff").withAlpha(0.8);
@@ -46,6 +47,11 @@ export class DeviceLayer {
   }
 
   setDevices(devices: Device[]) {
+    const signature = devices
+      .map((device) => `${device.id}:${device.longitude.toFixed(3)}:${device.latitude.toFixed(3)}:${device.orientationDeg.toFixed(1)}`)
+      .join("|");
+    if (signature === this.deviceSignature) return;
+    this.deviceSignature = signature;
     this.deviceEntities.forEach((entity) => this.entities.remove(entity));
     this.deviceEntities = devices.flatMap((device) => this.createDevice(device, false));
   }
@@ -53,6 +59,12 @@ export class DeviceLayer {
   setPreview(device: Device | null) {
     this.previewEntities.forEach((entity) => this.entities.remove(entity));
     this.previewEntities = device ? this.createDevice(device, true) : [];
+  }
+
+  setVisible(visible: boolean) {
+    [...this.deviceEntities, ...this.previewEntities, ...this.collector].forEach((entity) => {
+      entity.show = visible;
+    });
   }
 
   destroy() {

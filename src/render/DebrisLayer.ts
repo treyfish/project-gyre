@@ -74,6 +74,13 @@ export class DebrisLayer {
     });
   }
 
+  setVisible(visible: boolean) {
+    this.collection.show = visible;
+    this.bloom.forEach((entity) => {
+      entity.show = visible;
+    });
+  }
+
   destroy() {
     this.scene.primitives.remove(this.collection);
     this.bloom.forEach((entity) => this.entities.remove(entity));

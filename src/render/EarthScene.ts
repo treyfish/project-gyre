@@ -20,7 +20,7 @@ import type { Device, GeoPoint, RenderSnapshot } from "@/src/sim/contracts";
 type EarthSceneOptions = {
   field: CurrentFieldAsset;
   quality: RenderQuality;
-  onOceanPick(point: GeoPoint): void;
+  onDeploy(point: GeoPoint, orientationDeg: number): void;
   onReady?(): void;
   onError?(error: Error): void;
 };
@@ -39,6 +39,8 @@ export class EarthScene {
   private readonly handler: ScreenSpaceEventHandler;
   private readonly onPreRender = () => this.currentLayer.tick();
   private destroyed = false;
+  private placementMode = false;
+  private placementStart: GeoPoint | null = null;
 
   constructor(container: HTMLElement, private readonly options: EarthSceneOptions) {
     this.viewer = new Viewer(container, {
@@ -72,9 +74,21 @@ export class EarthScene {
     this.deviceLayer = new DeviceLayer(this.viewer.entities);
     this.viewer.scene.preRender.addEventListener(this.onPreRender);
     this.handler = new ScreenSpaceEventHandler(this.viewer.scene.canvas);
-    this.handler.setInputAction((movement: { position: Cartesian2 }) => this.pickOcean(movement.position), ScreenSpaceEventType.LEFT_CLICK);
+    this.handler.setInputAction(
+      (movement: { position: Cartesian2 }) => this.startPlacement(movement.position),
+      ScreenSpaceEventType.LEFT_DOWN,
+    );
+    this.handler.setInputAction(
+      (movement: { endPosition: Cartesian2 }) => this.updatePlacement(movement.endPosition),
+      ScreenSpaceEventType.MOUSE_MOVE,
+    );
+    this.handler.setInputAction(
+      (movement: { position: Cartesian2 }) => this.finishPlacement(movement.position),
+      ScreenSpaceEventType.LEFT_UP,
+    );
 
     this.setOpeningView();
+    this.setMissionVisible(false);
     void this.loadImagery();
   }
 
@@ -97,11 +111,27 @@ export class EarthScene {
     this.deviceLayer.setPreview(device);
   }
 
+  setPlacementMode(enabled: boolean) {
+    this.placementMode = enabled;
+    if (!enabled) {
+      this.placementStart = null;
+      this.deviceLayer.setPreview(null);
+      this.viewer.scene.screenSpaceCameraController.enableInputs = true;
+    }
+  }
+
+  setMissionVisible(visible: boolean) {
+    this.currentLayer.setVisible(visible);
+    this.debrisLayer.setVisible(visible);
+    this.deviceLayer.setVisible(visible);
+  }
+
   destroy() {
     if (this.destroyed) return;
     this.destroyed = true;
     this.viewer.scene.preRender.removeEventListener(this.onPreRender);
     this.handler.destroy();
+    this.viewer.scene.screenSpaceCameraController.enableInputs = true;
     this.currentLayer.destroy();
     this.debrisLayer.destroy();
     this.deviceLayer.destroy();
@@ -129,18 +159,57 @@ export class EarthScene {
     }
   }
 
-  private pickOcean(windowPosition: Cartesian2) {
+  private pickOcean(windowPosition: Cartesian2): GeoPoint | null {
     const ray = this.viewer.camera.getPickRay(windowPosition);
-    if (!ray) return;
+    if (!ray) return null;
     const position = this.viewer.scene.globe.pick(ray, this.viewer.scene);
-    if (!position) return;
+    if (!position) return null;
     const cartographic = Cartographic.fromCartesian(position);
     const point = {
       longitude: CesiumMath.toDegrees(cartographic.longitude),
       latitude: CesiumMath.toDegrees(cartographic.latitude),
     };
     if (point.longitude < 0) point.longitude += 360;
-    this.options.onOceanPick(point);
+    return point;
+  }
+
+  private startPlacement(windowPosition: Cartesian2) {
+    if (!this.placementMode) return;
+    const point = this.pickOcean(windowPosition);
+    if (!point) return;
+    this.placementStart = point;
+    this.viewer.scene.screenSpaceCameraController.enableInputs = false;
+    this.deviceLayer.setPreview({ ...point, id: "placement-preview", orientationDeg: 0, strength: 0.14 });
+  }
+
+  private updatePlacement(windowPosition: Cartesian2) {
+    if (!this.placementStart) return;
+    const point = this.pickOcean(windowPosition);
+    if (!point) return;
+    const longitudeScale = Math.max(0.4, Math.cos((this.placementStart.latitude * Math.PI) / 180));
+    const orientationDeg =
+      (Math.atan2(point.latitude - this.placementStart.latitude, (point.longitude - this.placementStart.longitude) * longitudeScale) * 180) /
+      Math.PI;
+    this.deviceLayer.setPreview({
+      ...this.placementStart,
+      id: "placement-preview",
+      orientationDeg,
+      strength: 0.14,
+    });
+  }
+
+  private finishPlacement(windowPosition: Cartesian2) {
+    if (!this.placementStart) return;
+    const point = this.pickOcean(windowPosition) ?? this.placementStart;
+    const longitudeScale = Math.max(0.4, Math.cos((this.placementStart.latitude * Math.PI) / 180));
+    const deltaLongitude = (point.longitude - this.placementStart.longitude) * longitudeScale;
+    const deltaLatitude = point.latitude - this.placementStart.latitude;
+    const orientationDeg = Math.hypot(deltaLongitude, deltaLatitude) < 0.1 ? 0 : (Math.atan2(deltaLatitude, deltaLongitude) * 180) / Math.PI;
+    const origin = this.placementStart;
+    this.placementStart = null;
+    this.viewer.scene.screenSpaceCameraController.enableInputs = true;
+    this.deviceLayer.setPreview(null);
+    this.options.onDeploy(origin, orientationDeg);
   }
 }
 

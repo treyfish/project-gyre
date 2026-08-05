@@ -22,6 +22,7 @@ export class CurrentLayer {
   private readonly particles: FlowParticle[] = [];
   private readonly validCells: number[];
   private devices: Device[] = [];
+  private deviceSignature = "";
   private lastFrame = 0;
 
   constructor(
@@ -52,8 +53,18 @@ export class CurrentLayer {
   }
 
   setDevices(devices: Device[]) {
+    const signature = devices
+      .map((device) => `${device.id}:${device.longitude.toFixed(3)}:${device.latitude.toFixed(3)}:${device.orientationDeg.toFixed(1)}`)
+      .join("|");
+    if (signature === this.deviceSignature) return;
+    this.deviceSignature = signature;
     this.devices = devices.map((device) => ({ ...device }));
     this.rebuildStreamlines();
+  }
+
+  setVisible(visible: boolean) {
+    this.points.show = visible;
+    this.lines.show = visible;
   }
 
   tick(now = performance.now()) {
