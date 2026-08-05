@@ -11,6 +11,11 @@ import type { GeoPoint, RenderSnapshot } from "@/src/sim/contracts";
 import { SimulationWorkerClient, type SimulationSpeed } from "@/src/sim/worker-client";
 
 const field = parseCurrentFieldAsset(rawField);
+const recommendedWaypoints = [
+  { longitude: 216, latitude: 34, orientationDeg: 18 },
+  { longitude: 224, latitude: 39, orientationDeg: -8 },
+  { longitude: 228, latitude: 29, orientationDeg: 32 },
+];
 
 function PlayIcon() {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.8 19 12 7 19.2Z" fill="currentColor" /></svg>;
@@ -78,6 +83,13 @@ export function GameShell() {
       },
     });
   }, []);
+
+  const deployRecommendedDevice = useCallback(() => {
+    const current = snapshotRef.current;
+    if (!current || current.availableDevices <= 0) return;
+    const waypoint = recommendedWaypoints[Math.min(recommendedWaypoints.length - 1, 3 - current.availableDevices)];
+    deployDevice(waypoint, waypoint.orientationDeg);
+  }, [deployDevice]);
 
   useEffect(() => {
     if (!sceneContainerRef.current) return;
@@ -230,6 +242,11 @@ export function GameShell() {
               disabled={snapshot.availableDevices === 0}
               aria-label="Deploy current-control device"
             ><DeviceIcon /></button>
+            <button
+              className="keyboard-placement"
+              onClick={deployRecommendedDevice}
+              disabled={snapshot.availableDevices === 0}
+            >Deploy at recommended waypoint</button>
             <span>{snapshot.availableDevices} available</span>
           </aside>
 

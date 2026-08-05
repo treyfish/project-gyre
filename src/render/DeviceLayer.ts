@@ -8,6 +8,8 @@ import {
 
 import type { Device } from "@/src/sim/contracts";
 
+const collectorLongitude = 234.8;
+
 function orientationEnd(device: Device, orientationOffset = 0, length = 5) {
   const angle = ((device.orientationDeg + orientationOffset) * Math.PI) / 180;
   return {
@@ -28,7 +30,7 @@ export class DeviceLayer {
       entities.add({
         id: "collector-corridor",
         polyline: {
-          positions: Cartesian3.fromDegreesArray([234, 25, 234, 46]),
+          positions: Cartesian3.fromDegreesArray([collectorLongitude, 25, collectorLongitude, 46]),
           width: 5,
           material: new PolylineGlowMaterialProperty({ glowPower: 0.18, color: collectorColor }),
           clampToGround: false,
@@ -39,7 +41,7 @@ export class DeviceLayer {
       this.collector.push(
         entities.add({
           id: `collector-node-${latitude}`,
-          position: Cartesian3.fromDegrees(234, latitude, 32_000),
+          position: Cartesian3.fromDegrees(collectorLongitude, latitude, 32_000),
           point: { pixelSize: 5, color: collectorColor, outlineColor: Color.WHITE.withAlpha(0.7), outlineWidth: 1 },
         }),
       );

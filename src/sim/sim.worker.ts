@@ -62,7 +62,7 @@ self.onmessage = (event: MessageEvent<SimulationWorkerRequest>) => {
     if (!simulation) throw new Error("Simulation must be initialized before receiving controls");
     if (request.type === "command") {
       simulation.dispatch(request.command);
-      if (!playing) send({ type: "snapshot", snapshot: simulation.step() });
+      if (!playing) send({ type: "snapshot", snapshot: simulation.flushCommands() });
       return;
     }
     if (request.type === "setSpeed") {

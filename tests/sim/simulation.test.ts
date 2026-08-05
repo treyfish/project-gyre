@@ -4,6 +4,22 @@ import { createSimulation } from "@/src/sim/simulation";
 import { eastwardField } from "@/tests/fixtures/current-field";
 
 describe("simulation", () => {
+  it("applies paused commands without advancing mission time", () => {
+    const simulation = createSimulation({ field: eastwardField, seed: 7, particleCount: 8, missionTicks: 40 });
+
+    simulation.dispatch({
+      type: "placeDevice",
+      tick: 0,
+      sequence: 0,
+      device: { id: "device-paused", longitude: 5, latitude: 5, orientationDeg: 15, strength: 0.12 },
+    });
+
+    const snapshot = simulation.flushCommands();
+    expect(snapshot.tick).toBe(0);
+    expect(snapshot.devices).toHaveLength(1);
+    expect(snapshot.energyUsed).toBe(0);
+  });
+
   it("rejects a fourth device and preserves the three-device budget", () => {
     const simulation = createSimulation({ field: eastwardField, seed: 7, particleCount: 8, missionTicks: 40 });
 

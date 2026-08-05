@@ -15,12 +15,9 @@ test("plays a deterministic North Pacific mission", async ({ page }) => {
   await page.getByRole("button", { name: "Enter North Pacific" }).click();
   await expect(page.getByRole("complementary", { name: "Mission score" })).toBeVisible();
   await expect(page.getByText("3 available")).toBeVisible();
-  const globe = page.getByTestId("earth-canvas");
-  const bounds = await globe.boundingBox();
-  expect(bounds).not.toBeNull();
-  if (!bounds) return;
-
-  await page.mouse.click(bounds.x + bounds.width * 0.48, bounds.y + bounds.height * 0.46);
+  const keyboardPlacement = page.getByRole("button", { name: "Deploy at recommended waypoint" });
+  await keyboardPlacement.focus();
+  await page.keyboard.press("Enter");
   await expect(page.getByText("2 available")).toBeVisible();
 
   await page.getByRole("button", { name: "12×" }).click();

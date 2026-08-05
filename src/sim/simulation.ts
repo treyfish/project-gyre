@@ -70,6 +70,13 @@ export function createSimulation(options: SimulationOptions): Simulation {
     return Math.abs(particle.longitude - collectorLongitude) <= longitudeSpan * 0.012 && particle.latitude >= south && particle.latitude <= north;
   };
 
+  const applyQueuedCommands = () => {
+    lastRejection = null;
+    const due = commands.filter((command) => command.tick <= tick);
+    commands = commands.filter((command) => command.tick > tick);
+    due.forEach(applyCommand);
+  };
+
   const snapshot = (): RenderSnapshot => {
     const positions = new Float32Array(particles.length * 2);
     particles.forEach((particle, index) => {
@@ -113,13 +120,14 @@ export function createSimulation(options: SimulationOptions): Simulation {
       commands.push(command);
       commands.sort((a, b) => a.tick - b.tick || a.sequence - b.sequence);
     },
+    flushCommands() {
+      applyQueuedCommands();
+      return snapshot();
+    },
     step() {
       if (status === "complete") return snapshot();
       status = "running";
-      lastRejection = null;
-      const due = commands.filter((command) => command.tick <= tick);
-      commands = commands.filter((command) => command.tick > tick);
-      due.forEach(applyCommand);
+      applyQueuedCommands();
 
       particles = particles.map((particle) => {
         if (particle.captured) return particle;

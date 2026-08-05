@@ -66,6 +66,7 @@ export type SimulationOptions = {
 
 export type Simulation = {
   dispatch(command: SimulationCommand): void;
+  flushCommands(): RenderSnapshot;
   step(): RenderSnapshot;
   snapshot(): RenderSnapshot;
   reset(): RenderSnapshot;
