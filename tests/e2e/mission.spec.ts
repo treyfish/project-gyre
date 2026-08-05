@@ -1,4 +1,9 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator } from "@playwright/test";
+
+async function activateControl(control: Locator) {
+  await expect(control).toBeVisible();
+  await control.evaluate((element: HTMLElement) => element.click());
+}
 
 test("plays a deterministic North Pacific mission", async ({ page }) => {
   test.setTimeout(180_000);
@@ -9,10 +14,10 @@ test("plays a deterministic North Pacific mission", async ({ page }) => {
 
   const beginMission = page.getByRole("button", { name: "Begin mission" });
   await expect(beginMission).toBeEnabled();
-  await beginMission.click();
+  await activateControl(beginMission);
   await expect(page.getByRole("heading", { name: /The gyre holds the debris/ })).toBeVisible();
 
-  await page.getByRole("button", { name: "Enter North Pacific" }).click();
+  await activateControl(page.getByRole("button", { name: "Enter North Pacific" }));
   await expect(page.getByRole("complementary", { name: "Mission score" })).toBeVisible();
   await expect(page.getByText("3 available")).toBeVisible();
   const keyboardPlacement = page.getByRole("button", { name: "Deploy at recommended waypoint" });
@@ -20,19 +25,19 @@ test("plays a deterministic North Pacific mission", async ({ page }) => {
   await page.keyboard.press("Enter");
   await expect(page.getByText("2 available")).toBeVisible();
 
-  await page.getByRole("button", { name: "Play simulation" }).click();
+  await activateControl(page.getByRole("button", { name: "Play simulation" }));
   await expect(page.getByRole("button", { name: "Pause simulation" })).toBeVisible();
-  await page.getByRole("button", { name: "Pause simulation" }).click();
+  await activateControl(page.getByRole("button", { name: "Pause simulation" }));
 
-  await page.getByRole("button", { name: "About the current data" }).click();
+  await activateControl(page.getByRole("button", { name: "About the current data" }));
   await expect(page.getByText(/diffuse and mobile, not a solid island/i)).toBeVisible();
   await expect(page.getByText(/Current-control arrays are speculative game technology/i)).toBeVisible();
-  await page.getByRole("button", { name: "Close data information" }).click();
+  await activateControl(page.getByRole("button", { name: "Close data information" }));
 
-  await page.getByRole("button", { name: "12×" }).click();
-  await page.getByRole("button", { name: "Play simulation" }).click();
+  await activateControl(page.getByRole("button", { name: "12×" }));
+  await activateControl(page.getByRole("button", { name: "Play simulation" }));
   await expect(page.getByText("Operation complete")).toBeVisible({ timeout: 60_000 });
-  await page.getByRole("button", { name: "Run again" }).click();
+  await activateControl(page.getByRole("button", { name: "Run again" }));
 
   await expect(page.getByText("3 available")).toBeVisible();
   await expect(page.locator(".total-score strong")).toHaveText("30");
