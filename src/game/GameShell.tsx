@@ -134,9 +134,13 @@ export function GameShell() {
       if (event.snapshot.status === "complete") dispatch({ type: "COMPLETE" });
     });
     const testMissionTicks = Number(searchParams.get("testMissionTicks"));
+    const testParticleCount = Number(searchParams.get("testParticleCount"));
     client.init({
       seed: 2_026_080_4,
-      particleCount: 1_200,
+      particleCount:
+        Number.isInteger(testParticleCount) && testParticleCount >= 64 && testParticleCount <= 1_200
+          ? testParticleCount
+          : 1_200,
       missionTicks: Number.isInteger(testMissionTicks) && testMissionTicks >= 60 ? testMissionTicks : undefined,
     });
 

@@ -5,7 +5,7 @@ test("plays a deterministic North Pacific mission", async ({ page }) => {
   const pageErrors: Error[] = [];
   page.on("pageerror", (error) => pageErrors.push(error));
 
-  await page.goto("/?testMissionTicks=3600");
+  await page.goto("/?testMissionTicks=3600&testParticleCount=160");
 
   const beginMission = page.getByRole("button", { name: "Begin mission" });
   await expect(beginMission).toBeEnabled();
@@ -20,7 +20,6 @@ test("plays a deterministic North Pacific mission", async ({ page }) => {
   await page.keyboard.press("Enter");
   await expect(page.getByText("2 available")).toBeVisible();
 
-  await page.getByRole("button", { name: "12×" }).click();
   await page.getByRole("button", { name: "Play simulation" }).click();
   await expect(page.getByRole("button", { name: "Pause simulation" })).toBeVisible();
   await page.getByRole("button", { name: "Pause simulation" }).click();
@@ -30,6 +29,7 @@ test("plays a deterministic North Pacific mission", async ({ page }) => {
   await expect(page.getByText(/Current-control arrays are speculative game technology/i)).toBeVisible();
   await page.getByRole("button", { name: "Close data information" }).click();
 
+  await page.getByRole("button", { name: "12×" }).click();
   await page.getByRole("button", { name: "Play simulation" }).click();
   await expect(page.getByText("Operation complete")).toBeVisible({ timeout: 10_000 });
   await page.getByRole("button", { name: "Run again" }).click();
