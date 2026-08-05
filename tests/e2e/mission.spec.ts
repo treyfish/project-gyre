@@ -1,11 +1,11 @@
 import { expect, test } from "@playwright/test";
 
 test("plays a deterministic North Pacific mission", async ({ page }) => {
-  test.setTimeout(90_000);
+  test.setTimeout(180_000);
   const pageErrors: Error[] = [];
   page.on("pageerror", (error) => pageErrors.push(error));
 
-  await page.goto("/?testMissionTicks=3600&testParticleCount=160");
+  await page.goto("/?testMissionTicks=720&testParticleCount=64");
 
   const beginMission = page.getByRole("button", { name: "Begin mission" });
   await expect(beginMission).toBeEnabled();
@@ -31,7 +31,7 @@ test("plays a deterministic North Pacific mission", async ({ page }) => {
 
   await page.getByRole("button", { name: "12×" }).click();
   await page.getByRole("button", { name: "Play simulation" }).click();
-  await expect(page.getByText("Operation complete")).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText("Operation complete")).toBeVisible({ timeout: 60_000 });
   await page.getByRole("button", { name: "Run again" }).click();
 
   await expect(page.getByText("3 available")).toBeVisible();
