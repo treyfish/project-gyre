@@ -50,13 +50,13 @@ describe("SimulationWorkerClient", () => {
     client.subscribe((event) => {
       if (event.type === "snapshot") received.push(event.snapshot);
     });
-    client.init({ seed: 42, particleCount: 100 });
+    client.init({ seed: 42, particleCount: 100, missionTicks: 240 });
     client.command(command);
     client.setSpeed(4);
     worker.emit({ type: "snapshot", snapshot });
 
     expect(worker.messages).toEqual([
-      { type: "init", seed: 42, particleCount: 100 },
+      { type: "init", seed: 42, particleCount: 100, missionTicks: 240 },
       { type: "command", command },
       { type: "setSpeed", speed: 4 },
     ]);

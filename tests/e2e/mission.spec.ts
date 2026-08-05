@@ -1,0 +1,43 @@
+import { expect, test } from "@playwright/test";
+
+test("plays a deterministic North Pacific mission", async ({ page }) => {
+  test.setTimeout(90_000);
+  const pageErrors: Error[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error));
+
+  await page.goto("/?testMissionTicks=3600");
+
+  const beginMission = page.getByRole("button", { name: "Begin mission" });
+  await expect(beginMission).toBeEnabled();
+  await beginMission.click();
+  await expect(page.getByRole("heading", { name: /The gyre holds the debris/ })).toBeVisible();
+
+  await page.getByRole("button", { name: "Enter North Pacific" }).click();
+  await expect(page.getByRole("complementary", { name: "Mission score" })).toBeVisible();
+  await expect(page.getByText("3 available")).toBeVisible();
+  const globe = page.getByTestId("earth-canvas");
+  const bounds = await globe.boundingBox();
+  expect(bounds).not.toBeNull();
+  if (!bounds) return;
+
+  await page.mouse.click(bounds.x + bounds.width * 0.48, bounds.y + bounds.height * 0.46);
+  await expect(page.getByText("2 available")).toBeVisible();
+
+  await page.getByRole("button", { name: "12×" }).click();
+  await page.getByRole("button", { name: "Play simulation" }).click();
+  await expect(page.getByRole("button", { name: "Pause simulation" })).toBeVisible();
+  await page.getByRole("button", { name: "Pause simulation" }).click();
+
+  await page.getByRole("button", { name: "About the current data" }).click();
+  await expect(page.getByText(/diffuse and mobile, not a solid island/i)).toBeVisible();
+  await expect(page.getByText(/Current-control arrays are speculative game technology/i)).toBeVisible();
+  await page.getByRole("button", { name: "Close data information" }).click();
+
+  await page.getByRole("button", { name: "Play simulation" }).click();
+  await expect(page.getByText("Operation complete")).toBeVisible({ timeout: 10_000 });
+  await page.getByRole("button", { name: "Run again" }).click();
+
+  await expect(page.getByText("3 available")).toBeVisible();
+  await expect(page.locator(".total-score strong")).toHaveText("30");
+  expect(pageErrors).toEqual([]);
+});

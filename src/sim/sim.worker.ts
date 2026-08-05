@@ -46,7 +46,12 @@ self.onmessage = (event: MessageEvent<SimulationWorkerRequest>) => {
   try {
     const request = event.data;
     if (request.type === "init") {
-      simulation = createSimulation({ field, seed: request.seed, particleCount: request.particleCount });
+      simulation = createSimulation({
+        field,
+        seed: request.seed,
+        particleCount: request.particleCount,
+        missionTicks: request.missionTicks,
+      });
       playing = false;
       speed = 1;
       stopTimer();

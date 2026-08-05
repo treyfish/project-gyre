@@ -81,7 +81,8 @@ export function GameShell() {
 
   useEffect(() => {
     if (!sceneContainerRef.current) return;
-    const forcedFailure = new URLSearchParams(window.location.search).has("forceNoWebgl");
+    const searchParams = new URLSearchParams(window.location.search);
+    const forcedFailure = searchParams.has("forceNoWebgl");
     if (forcedFailure || !webGlAvailable()) {
       dispatch({ type: "INCOMPATIBLE" });
       return;
@@ -120,7 +121,12 @@ export function GameShell() {
       scene.applySnapshot(event.snapshot);
       if (event.snapshot.status === "complete") dispatch({ type: "COMPLETE" });
     });
-    client.init({ seed: 2_026_080_4, particleCount: 1_200 });
+    const testMissionTicks = Number(searchParams.get("testMissionTicks"));
+    client.init({
+      seed: 2_026_080_4,
+      particleCount: 1_200,
+      missionTicks: Number.isInteger(testMissionTicks) && testMissionTicks >= 60 ? testMissionTicks : undefined,
+    });
 
     return () => {
       unsubscribe();

@@ -3,7 +3,7 @@ import type { RenderSnapshot, SimulationCommand } from "@/src/sim/contracts";
 export type SimulationSpeed = 1 | 4 | 12;
 
 export type SimulationWorkerRequest =
-  | { type: "init"; seed: number; particleCount?: number }
+  | { type: "init"; seed: number; particleCount?: number; missionTicks?: number }
   | { type: "command"; command: SimulationCommand }
   | { type: "play" }
   | { type: "pause" }
@@ -47,7 +47,7 @@ export class SimulationWorkerClient {
     return () => this.listeners.delete(listener);
   }
 
-  init(options: { seed: number; particleCount?: number }) {
+  init(options: { seed: number; particleCount?: number; missionTicks?: number }) {
     this.worker.postMessage({ type: "init", ...options } satisfies SimulationWorkerRequest);
   }
 
